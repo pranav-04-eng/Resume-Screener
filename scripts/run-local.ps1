@@ -39,6 +39,57 @@ for ($i = 0; $i -lt 30; $i++) {
 }
 Note "LocalStack ready (S3 / DynamoDB / SQS)."
 
+# --- 1b. Bootstrap LocalStack resources (idempotent) ----------------------
+Note "Ensuring S3 / DynamoDB / SQS resources exist..."
+$LS  = "http://localhost:4566"
+$awsBase = @("--endpoint-url", $LS,
+             "--region", "us-east-1",
+             "--output", "text")
+$env:AWS_ACCESS_KEY_ID     = "test"
+$env:AWS_SECRET_ACCESS_KEY = "test"
+$env:AWS_DEFAULT_REGION    = "us-east-1"
+
+# S3 bucket
+$buckets = aws @awsBase s3api list-buckets --query "Buckets[].Name" 2>$null
+if ($buckets -notmatch "resume-screener-files") {
+  aws @awsBase s3api create-bucket --bucket resume-screener-files | Out-Null
+  $cors = '{"CORSRules":[{"AllowedHeaders":["*"],"AllowedMethods":["PUT","GET"],"AllowedOrigins":["*"],"ExposeHeaders":["ETag"]}]}'
+  $cors | Set-Content -Encoding ascii "$env:TEMP\cors.json"
+  aws @awsBase s3api put-bucket-cors --bucket resume-screener-files --cors-configuration "file://$env:TEMP\cors.json" | Out-Null
+  Note "  Created S3 bucket resume-screener-files"
+}
+
+# DynamoDB table
+$tables = aws @awsBase dynamodb list-tables --query "TableNames" 2>$null
+if ($tables -notmatch "resume-screener") {
+  aws @awsBase dynamodb create-table `
+    --table-name resume-screener `
+    --attribute-definitions AttributeName=PK,AttributeType=S AttributeName=SK,AttributeType=S AttributeName=GSI1PK,AttributeType=S AttributeName=GSI1SK,AttributeType=S `
+    --key-schema AttributeName=PK,KeyType=HASH AttributeName=SK,KeyType=RANGE `
+    --global-secondary-indexes '[{"IndexName":"GSI1","KeySchema":[{"AttributeName":"GSI1PK","KeyType":"HASH"},{"AttributeName":"GSI1SK","KeyType":"RANGE"}],"Projection":{"ProjectionType":"ALL"}}]' `
+    --billing-mode PAY_PER_REQUEST | Out-Null
+  Note "  Created DynamoDB table resume-screener"
+}
+
+# SQS queues
+$queues = aws @awsBase sqs list-queues --query "QueueUrls" 2>$null
+if ($queues -notmatch "resume-screener-jobs-dlq") {
+  aws @awsBase sqs create-queue --queue-name resume-screener-jobs-dlq | Out-Null
+  Note "  Created SQS DLQ resume-screener-jobs-dlq"
+}
+if ($queues -notmatch "resume-screener-jobs`"") {
+  $dlqUrl = aws @awsBase sqs get-queue-url --queue-name resume-screener-jobs-dlq --query QueueUrl 2>$null
+  $dlqArn = aws @awsBase sqs get-queue-attributes --queue-url $dlqUrl --attribute-names QueueArn --query "Attributes.QueueArn" 2>$null
+  $redrive = '{"deadLetterTargetArn":"' + $dlqArn + '","maxReceiveCount":"3"}'
+  aws @awsBase sqs create-queue --queue-name resume-screener-jobs `
+    --attributes "VisibilityTimeout=300" | Out-Null
+  $mainUrl = aws @awsBase sqs get-queue-url --queue-name resume-screener-jobs --query QueueUrl 2>$null
+  aws @awsBase sqs set-queue-attributes --queue-url $mainUrl `
+    --attributes "RedrivePolicy=$redrive" | Out-Null
+  Note "  Created SQS queue resume-screener-jobs"
+}
+Note "LocalStack resources ready."
+
 # Helper: launch a command in a new PowerShell window with env inherited.
 function Start-Svc($title, $command) {
   Note "Starting $title..."
