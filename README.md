@@ -59,6 +59,24 @@ pip install -e shared -e services/intake
 RUNTIME_ENV=local uvicorn app.main:app --app-dir services/intake --reload --port 8001
 ```
 
+Run the worker manually on Windows with the shell-appropriate syntax:
+
+```powershell
+# PowerShell
+$env:PYTHONPATH='services/worker'; .venv\Scripts\python.exe -m app.main
+```
+
+```bat
+:: cmd.exe
+set PYTHONPATH=services\worker && .venv\Scripts\python.exe -m app.main
+```
+
+Or use the helper script:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/run-worker.ps1
+```
+
 ## Layout
 
 ```
