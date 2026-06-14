@@ -1,0 +1,64 @@
+:root {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --fg: #e2e8f0;
+  --muted: #94a3b8;
+  --accent: #38bdf8;
+  --border: #334155;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+}
+.container { max-width: 980px; margin: 0 auto; padding: 2rem 1.5rem; }
+header h1 { margin: 0; }
+.sub, .hint { color: var(--muted); }
+.hint { font-size: 0.85rem; margin-left: 0.5rem; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+}
+form.card { display: flex; flex-direction: column; gap: 1rem; }
+label { display: flex; flex-direction: column; gap: 0.4rem; font-weight: 600; }
+input {
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #0b1220;
+  color: var(--fg);
+}
+button {
+  padding: 0.7rem 1.2rem;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #04263a;
+  font-weight: 700;
+  cursor: pointer;
+}
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+.error { color: #f87171; }
+
+.results-head { display: flex; justify-content: space-between; align-items: center; }
+.results-head h2 { margin: 0 0 0.4rem; }
+
+table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+th, td { text-align: left; padding: 0.7rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; }
+.summary { max-width: 380px; font-size: 0.9rem; }
+
+.tags { margin-top: 0.4rem; display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.tag { background: #0b1220; border: 1px solid var(--border); border-radius: 6px; padding: 0.1rem 0.5rem; font-size: 0.75rem; }
+
+.badge { padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
+.badge-completed, .badge-scored { background: #052e16; color: #4ade80; }
+.badge-processing, .badge-queued { background: #422006; color: #fbbf24; }
+.badge-failed { background: #450a0a; color: #f87171; }
+.badge-created, .badge-pending { background: #1e293b; color: var(--muted); }

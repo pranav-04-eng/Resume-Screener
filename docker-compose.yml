@@ -1,0 +1,62 @@
+# Local development stack. Brings up LocalStack (S3 + DynamoDB + SQS) and the
+# three FastAPI services + worker, all pointed at LocalStack via RUNTIME_ENV=local.
+# The frontend runs separately with `npm run dev` (see frontend/README).
+
+services:
+  localstack:
+    image: localstack/localstack:3
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3,dynamodb,sqs
+      - DEBUG=0
+    volumes:
+      - "./scripts/init-localstack.sh:/etc/localstack/init/ready.d/init.sh"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "awslocal sqs list-queues && awslocal dynamodb list-tables"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+
+  intake:
+    build:
+      context: .
+      dockerfile: services/intake/Dockerfile
+    ports:
+      - "8001:8000"
+    env_file: .env
+    environment:
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      # Pre-signed URLs must be reachable from the browser on the host.
+      - S3_PUBLIC_ENDPOINT=http://localhost:4566
+      - SQS_QUEUE_URL=http://localstack:4566/000000000000/resume-screener-jobs
+      - SQS_DLQ_URL=http://localstack:4566/000000000000/resume-screener-jobs-dlq
+    depends_on:
+      localstack:
+        condition: service_healthy
+
+  results:
+    build:
+      context: .
+      dockerfile: services/results/Dockerfile
+    ports:
+      - "8002:8000"
+    env_file: .env
+    environment:
+      - AWS_ENDPOINT_URL=http://localstack:4566
+    depends_on:
+      localstack:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: services/worker/Dockerfile
+    env_file: .env
+    environment:
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - SQS_QUEUE_URL=http://localstack:4566/000000000000/resume-screener-jobs
+      - SQS_DLQ_URL=http://localstack:4566/000000000000/resume-screener-jobs-dlq
+    depends_on:
+      localstack:
+        condition: service_healthy

@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker --version)",
+      "Bash(node --version)",
+      "Bash(npm --version)",
+      "Bash(chmod +x scripts/init-localstack.sh)",
+      "Bash(docker info *)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(docker compose *)",
+      "Bash(curl -sf http://localhost:4566/_localstack/health)",
+      "Bash(break)",
+      "Bash(curl -s http://localhost:4566/_localstack/health)",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s http://localhost:8001/healthz)",
+      "Bash(curl -s http://localhost:8002/healthz)",
+      "Read(//private/tmp/**)",
+      "Bash(curl -s http://localhost:5174)",
+      "Bash(curl -s -o /dev/null -w \"5174 -> HTTP %{http_code}\\\\n\" http://localhost:5174)",
+      "Bash(chmod +x scripts/run-local.sh scripts/run-stop.sh)",
+      "Bash(bash -n scripts/run-local.sh)",
+      "Bash(bash -n scripts/run-stop.sh)"
+    ]
+  }
+}

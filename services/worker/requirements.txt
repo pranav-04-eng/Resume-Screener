@@ -1,0 +1,7 @@
+pydantic>=2.6
+langchain>=0.2
+langchain-groq>=0.1.9
+# resume text extraction
+pypdf>=4.2
+python-docx>=1.1
+# shared contract package (installed via -e ../../shared in Docker build)
